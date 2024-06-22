@@ -1,0 +1,46 @@
+{
+  "LogLevel": "info",
+  "Timeout": "15s",
+  "Coefficient": 15.03,
+
+  "MySQL": {
+    "ConnectionString": "test:test@tcp(127.0.0.1:3306)/testdb?parseTime=true&interpolateParams=true",
+    "MaxOpenConnections": 10,
+    "MaxIdleConnections": 10,
+    "ConnectionMaxLifetime": "3m",
+    "ConnectionMaxIdleTime": "3m"
+  },
+
+  "Redis": {
+    "Host": "localhost:6379",
+    "User": "",
+    "Password": "",
+    "DB": 0
+  },
+
+  "Clickhouse": {
+    "Hosts": ["localhost:9000"],
+    "User": "test",
+    "Password": "test",
+    "Database": "testdb",
+    "Debug": false,
+    "MaxExecutionTime": 60,
+    "DialTimeout": "30s",
+    "MaxOpenConnections": 5,
+    "MaxIdleConnections": 5,
+    "ConnectionMaxLifetime": "10m",
+    "BlockBufferSize": 10
+  },
+
+  "Tarantool": {
+    "Host": "localhost:3301",
+    "User": "test",
+    "Password": "test",
+    "Timeout": "1s",
+    "ReconnectInterval": "3s"
+  },
+
+  "Nats": {
+    "ConnectionString": "nats://127.0.0.1:4222"
+  }
+}
