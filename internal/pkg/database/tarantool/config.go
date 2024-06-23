@@ -1,11 +1,11 @@
 package tarantool
 
-import "time"
+import "github.com/iamsorryprincess/project-layout/internal/pkg/config"
 
 type Config struct {
 	Host              string
 	User              string
 	Password          string
-	Timeout           time.Duration
-	ReconnectInterval time.Duration
+	Timeout           config.Duration
+	ReconnectInterval config.Duration
 }

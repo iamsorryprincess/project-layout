@@ -1,11 +1,11 @@
 package mysql
 
-import "time"
+import "github.com/iamsorryprincess/project-layout/internal/pkg/config"
 
 type Config struct {
 	ConnectionString      string
 	MaxOpenConnections    int
 	MaxIdleConnections    int
-	ConnectionMaxLifetime time.Duration
-	ConnectionMaxIdleTime time.Duration
+	ConnectionMaxLifetime config.Duration
+	ConnectionMaxIdleTime config.Duration
 }

@@ -1,8 +1,7 @@
 package config
 
 import (
-	"time"
-
+	"github.com/iamsorryprincess/project-layout/internal/pkg/config"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/mysql"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
@@ -11,8 +10,9 @@ import (
 
 type Config struct {
 	LogLevel    string
-	Timeout     time.Duration
+	Timeout     config.Duration
 	Coefficient float64
+	Expire      config.Duration
 
 	MySQL mysql.Config
 
@@ -21,4 +21,12 @@ type Config struct {
 	Clickhouse clickhouse.Config
 
 	Tarantool tarantool.Config
+}
+
+func New(serviceName string) (Config, error) {
+	var cfg Config
+	if err := config.Parse(serviceName, &cfg); err != nil {
+		return Config{}, err
+	}
+	return cfg, nil
 }

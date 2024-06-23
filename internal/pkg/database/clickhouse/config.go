@@ -1,6 +1,6 @@
 package clickhouse
 
-import "time"
+import "github.com/iamsorryprincess/project-layout/internal/pkg/config"
 
 type Config struct {
 	Hosts                 []string
@@ -9,9 +9,9 @@ type Config struct {
 	Database              string
 	Debug                 bool
 	MaxExecutionTime      int
-	DialTimeout           time.Duration
+	DialTimeout           config.Duration
 	MaxOpenConnections    int
 	MaxIdleConnections    int
-	ConnectionMaxLifetime time.Duration
+	ConnectionMaxLifetime config.Duration
 	BlockBufferSize       int
 }

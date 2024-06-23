@@ -8,7 +8,7 @@ import (
 )
 
 // projectName Set actual project name
-const projectName = "project_name"
+const projectName = "project-layout"
 
 type Logger struct {
 	zerolog.Logger

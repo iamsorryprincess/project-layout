@@ -11,6 +11,8 @@ import (
 
 type Connection struct {
 	driver.Conn
+
+	logger log.Logger
 }
 
 func New(config Config, logger log.Logger) (*Connection, error) {
@@ -31,10 +33,10 @@ func New(config Config, logger log.Logger) (*Connection, error) {
 		Compression: &clickhouse.Compression{
 			Method: clickhouse.CompressionLZ4,
 		},
-		DialTimeout:      config.DialTimeout,
+		DialTimeout:      config.DialTimeout.Duration,
 		MaxOpenConns:     config.MaxOpenConnections,
 		MaxIdleConns:     config.MaxIdleConnections,
-		ConnMaxLifetime:  config.ConnectionMaxLifetime,
+		ConnMaxLifetime:  config.ConnectionMaxLifetime.Duration,
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
 		BlockBufferSize:  uint8(config.BlockBufferSize),
 	})
@@ -47,6 +49,13 @@ func New(config Config, logger log.Logger) (*Connection, error) {
 	}
 
 	return &Connection{
-		Conn: conn,
+		Conn:   conn,
+		logger: logger,
 	}, nil
+}
+
+func (c *Connection) Close() {
+	if err := c.Conn.Close(); err != nil {
+		c.logger.Error().Str("type", "clickhouse").Msg("clickhouse failed to close connection")
+	}
 }
