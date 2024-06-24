@@ -1,7 +1,6 @@
 package repository
 
-type Repository struct {
-}
+type Repository struct{}
 
 func New() *Repository {
 	return &Repository{}
@@ -11,6 +10,6 @@ func (r *Repository) GetData() ([]string, error) {
 	return []string{"test1", "test2", "test3"}, nil
 }
 
-func (r *Repository) SaveData(data []string) error {
+func (r *Repository) SaveData(_ []string) error {
 	return nil
 }
