@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/config"
+	httptransport "github.com/iamsorryprincess/project-layout/cmd/service-a/http"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/repository"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/service"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/background"
@@ -119,7 +120,8 @@ func (a *App) initWorkers() {
 }
 
 func (a *App) initHTTP() {
-	a.httpServer = http.NewServer(a.config.HTTP, a.logger, nil)
+	router := httptransport.NewRouter(a.repository, a.logger)
+	a.httpServer = http.NewServer(a.config.HTTP, a.logger, router)
 	a.httpServer.Start()
 }
 
