@@ -6,6 +6,7 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/mysql"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/tarantool"
+	"github.com/iamsorryprincess/project-layout/internal/pkg/http"
 )
 
 type Config struct {
@@ -14,6 +15,8 @@ type Config struct {
 	Coefficient float64
 	Expire      config.Duration
 	Interval    config.Duration
+
+	HTTP http.Config
 
 	MySQL mysql.Config
 

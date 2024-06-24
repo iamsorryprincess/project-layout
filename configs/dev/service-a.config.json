@@ -5,6 +5,10 @@
   "Expire": "365d",
   "Interval": "5s",
 
+  "HTTP": {
+    "Address": ":8080"
+  },
+
   "MySQL": {
     "ConnectionString": "test:test@tcp(127.0.0.1:3306)/testdb?parseTime=true&interpolateParams=true",
     "MaxOpenConnections": 10,

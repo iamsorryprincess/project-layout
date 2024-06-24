@@ -11,6 +11,7 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/mysql"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/tarantool"
+	"github.com/iamsorryprincess/project-layout/internal/pkg/http"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
 )
 
@@ -31,6 +32,8 @@ type App struct {
 	service *service.Service
 
 	worker *background.Worker
+
+	httpServer *http.Server
 }
 
 func New() *App {
@@ -51,6 +54,8 @@ func (a *App) Run() {
 	a.initServices()
 
 	a.initWorkers()
+
+	a.initHTTP()
 
 	a.logger.Info().Interface("configuration", a.config).Msg("service started")
 
@@ -113,7 +118,13 @@ func (a *App) initWorkers() {
 	}
 }
 
+func (a *App) initHTTP() {
+	a.httpServer = http.NewServer(a.config.HTTP, a.logger, nil)
+	a.httpServer.Start()
+}
+
 func (a *App) close() {
+	a.httpServer.Stop()
 	a.worker.StopAll()
 	a.mysqlConn.Close()
 	a.redisConn.Close()
