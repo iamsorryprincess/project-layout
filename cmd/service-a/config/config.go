@@ -13,6 +13,7 @@ type Config struct {
 	Timeout     config.Duration
 	Coefficient float64
 	Expire      config.Duration
+	Interval    config.Duration
 
 	MySQL mysql.Config
 

@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/config"
+	"github.com/iamsorryprincess/project-layout/cmd/service-a/repository"
+	"github.com/iamsorryprincess/project-layout/cmd/service-a/service"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/background"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/mysql"
@@ -23,6 +25,12 @@ type App struct {
 	redisConn      *redis.Connection
 	clickhouseConn *clickhouse.Connection
 	tarantoolConn  *tarantool.Connection
+
+	repository *repository.Repository
+
+	service *service.Service
+
+	worker *background.Worker
 }
 
 func New() *App {
@@ -38,11 +46,19 @@ func (a *App) Run() {
 
 	a.initDatabases()
 
+	a.initRepositories()
+
+	a.initServices()
+
+	a.initWorkers()
+
 	a.logger.Info().Interface("configuration", a.config).Msg("service started")
 
-	defer a.close()
+	stopSignal := background.Wait()
 
-	background.Wait(a.logger)
+	a.close()
+
+	a.logger.Info().Str("stop_signal", stopSignal.String()).Msg("service stopped")
 }
 
 func (a *App) initConfig() {
@@ -61,28 +77,44 @@ func (a *App) initDatabases() {
 		a.logger.Fatal().Str("type", "mysql").Msg(err.Error())
 	}
 
-	a.logger.Info().Msg("mysql connected")
+	a.logger.Info().Str("type", "mysql").Msg("mysql connected")
 
 	if a.redisConn, err = redis.New(a.config.Redis, a.logger); err != nil {
 		a.logger.Fatal().Str("type", "redis").Msg(err.Error())
 	}
 
-	a.logger.Info().Msg("redis connected")
+	a.logger.Info().Str("type", "redis").Msg("redis connected")
 
 	if a.clickhouseConn, err = clickhouse.New(a.config.Clickhouse, a.logger); err != nil {
 		a.logger.Fatal().Str("type", "clickhouse").Msg(err.Error())
 	}
 
-	a.logger.Info().Msg("clickhouse connected")
+	a.logger.Info().Str("type", "clickhouse").Msg("clickhouse connected")
 
 	if a.tarantoolConn, err = tarantool.New(a.config.Tarantool, a.logger); err != nil {
 		a.logger.Fatal().Str("type", "tarantool").Msg(err.Error())
 	}
 
-	a.logger.Info().Msg("tarantool connected")
+	a.logger.Info().Str("type", "tarantool").Msg("tarantool connected")
+}
+
+func (a *App) initRepositories() {
+	a.repository = repository.New()
+}
+
+func (a *App) initServices() {
+	a.service = service.NewService(a.repository, a.logger)
+}
+
+func (a *App) initWorkers() {
+	a.worker = background.NewWorker(a.logger)
+	if _, err := a.worker.StartWithInterval(a.ctx, "printing data", a.config.Interval.Duration, a.service.PrintData); err != nil {
+		a.logger.Fatal().Str("type", "worker").Msg("failed to start printing data worker")
+	}
 }
 
 func (a *App) close() {
+	a.worker.StopAll()
 	a.mysqlConn.Close()
 	a.redisConn.Close()
 	a.clickhouseConn.Close()

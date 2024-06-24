@@ -7,18 +7,28 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
 )
 
-var ErrWorkerStopped = errors.New("worker stopped")
+var (
+	ErrWorkerStopped  = errors.New("worker stopped")
+	ErrWorkerNotFound = errors.New("worker not found")
+)
 
 type WorkerFunc func(ctx context.Context) error
+
+type workerItem struct {
+	ID        string
+	Name      string
+	CloseChan chan struct{}
+}
 
 type Worker struct {
 	wg        sync.WaitGroup
 	mu        sync.Mutex
-	done      chan struct{}
 	isStopped bool
+	items     map[string]workerItem
 
 	logger log.Logger
 }
@@ -27,27 +37,39 @@ func NewWorker(logger log.Logger) *Worker {
 	return &Worker{
 		wg:        sync.WaitGroup{},
 		mu:        sync.Mutex{},
-		done:      make(chan struct{}),
 		isStopped: false,
+		items:     make(map[string]workerItem),
 		logger:    logger,
 	}
 }
 
-func (w *Worker) Start(ctx context.Context, name string, fn WorkerFunc) error {
+func (w *Worker) Start(ctx context.Context, name string, fn WorkerFunc) (string, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
 	if w.isStopped {
-		return ErrWorkerStopped
+		return "", ErrWorkerStopped
 	}
 
 	w.wg.Add(1)
+	id := uuid.New().String()
+	closeChan := make(chan struct{})
+
+	w.items[id] = workerItem{
+		ID:        id,
+		Name:      name,
+		CloseChan: closeChan,
+	}
 
 	go func() {
 		defer w.wg.Done()
 		for {
 			select {
-			case <-w.done:
+			case <-closeChan:
+				w.logger.Debug().
+					Str("type", "worker").
+					Str("worker", name).
+					Msg("worker stopped")
 				return
 			default:
 				now := time.Now()
@@ -60,40 +82,53 @@ func (w *Worker) Start(ctx context.Context, name string, fn WorkerFunc) error {
 		}
 	}()
 
-	return nil
+	return id, nil
 }
 
-func (w *Worker) StartWithInterval(ctx context.Context, name string, fn WorkerFunc, interval time.Duration) error {
+func (w *Worker) StartWithInterval(ctx context.Context, name string, interval time.Duration, fn WorkerFunc) (string, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
 	if w.isStopped {
-		return ErrWorkerStopped
+		return "", ErrWorkerStopped
 	}
 
 	w.wg.Add(1)
+	id := uuid.New().String()
+	closeChan := make(chan struct{})
+
+	w.items[id] = workerItem{
+		ID:        id,
+		Name:      name,
+		CloseChan: closeChan,
+	}
 
 	go func() {
 		defer w.wg.Done()
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
+		timer := time.NewTimer(interval)
+		defer timer.Stop()
 
 		for {
 			select {
-			case <-w.done:
+			case <-closeChan:
+				w.logger.Debug().
+					Str("type", "worker").
+					Str("worker", name).
+					Msg("worker stopped")
 				return
-			case <-ticker.C:
+			case <-timer.C:
 				now := time.Now()
 				w.runWorkerFunc(ctx, name, fn)
 				w.logger.Debug().
 					Str("type", "worker").
 					Str("worker", name).
 					Msgf("worker %s finished in %s", name, time.Since(now))
+				timer.Reset(interval)
 			}
 		}
 	}()
 
-	return nil
+	return id, nil
 }
 
 func (w *Worker) Run(ctx context.Context, name string, fn WorkerFunc) error {
@@ -119,11 +154,30 @@ func (w *Worker) Run(ctx context.Context, name string, fn WorkerFunc) error {
 	return nil
 }
 
+func (w *Worker) Stop(id string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	item, ok := w.items[id]
+	if !ok {
+		return ErrWorkerNotFound
+	}
+
+	item.CloseChan <- struct{}{}
+	delete(w.items, id)
+	return nil
+}
+
 func (w *Worker) StopAll() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.isStopped = true
-	w.done <- struct{}{}
+
+	for _, item := range w.items {
+		close(item.CloseChan)
+	}
+
+	clear(w.items)
 	w.wg.Wait()
 }
 

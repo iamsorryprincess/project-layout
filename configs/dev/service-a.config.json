@@ -1,8 +1,9 @@
 {
-  "LogLevel": "info",
+  "LogLevel": "debug",
   "Timeout": "3s",
   "Coefficient": 15.03,
   "Expire": "365d",
+  "Interval": "5s",
 
   "MySQL": {
     "ConnectionString": "test:test@tcp(127.0.0.1:3306)/testdb?parseTime=true&interpolateParams=true",
