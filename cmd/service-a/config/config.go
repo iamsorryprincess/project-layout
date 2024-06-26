@@ -7,6 +7,7 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/tarantool"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/http"
+	"github.com/iamsorryprincess/project-layout/internal/pkg/messaging/nats"
 )
 
 type Config struct {
@@ -25,6 +26,8 @@ type Config struct {
 	Clickhouse clickhouse.Config
 
 	Tarantool tarantool.Config
+
+	Nats nats.Config
 }
 
 func New(serviceName string) (Config, error) {

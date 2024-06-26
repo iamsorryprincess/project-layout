@@ -14,6 +14,7 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/tarantool"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/http"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
+	"github.com/iamsorryprincess/project-layout/internal/pkg/messaging/nats"
 )
 
 const serviceName = "service-a"
@@ -27,6 +28,8 @@ type App struct {
 	redisConn      *redis.Connection
 	clickhouseConn *clickhouse.Connection
 	tarantoolConn  *tarantool.Connection
+
+	natsConn *nats.Connection
 
 	repository *repository.Repository
 
@@ -49,6 +52,8 @@ func (a *App) Run() {
 	a.logger = log.New(a.config.LogLevel, serviceName)
 
 	a.initDatabases()
+
+	a.initNats()
 
 	a.initRepositories()
 
@@ -104,6 +109,14 @@ func (a *App) initDatabases() {
 	a.logger.Info().Str("type", "tarantool").Msg("tarantool connected")
 }
 
+func (a *App) initNats() {
+	var err error
+	if a.natsConn, err = nats.New(a.config.Nats, a.logger); err != nil {
+		a.logger.Fatal().Str("type", "nats").Msg(err.Error())
+	}
+	a.logger.Info().Str("type", "nats").Msg("nats connected")
+}
+
 func (a *App) initRepositories() {
 	a.repository = repository.New()
 }
@@ -128,6 +141,7 @@ func (a *App) initHTTP() {
 func (a *App) close() {
 	a.httpServer.Stop()
 	a.worker.StopAll()
+	a.natsConn.Close()
 	a.mysqlConn.Close()
 	a.redisConn.Close()
 	a.clickhouseConn.Close()

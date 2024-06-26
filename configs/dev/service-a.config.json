@@ -47,6 +47,8 @@
   },
 
   "Nats": {
-    "ConnectionString": "nats://127.0.0.1:4222"
+    "ConnectionString": "nats://127.0.0.1:4222",
+    "MaxReconnectCount": 3,
+    "Timeout": "1s"
   }
 }
