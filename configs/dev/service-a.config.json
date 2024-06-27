@@ -10,7 +10,7 @@
   },
 
   "MySQL": {
-    "ConnectionString": "test:test@tcp(127.0.0.1:3306)/testdb?parseTime=true&interpolateParams=true",
+    "ConnectionString": "test:test@tcp(localhost:3306)/testdb?parseTime=true&interpolateParams=true",
     "MaxOpenConnections": 10,
     "MaxIdleConnections": 10,
     "ConnectionMaxLifetime": "3m",
@@ -47,7 +47,7 @@
   },
 
   "Nats": {
-    "ConnectionString": "nats://127.0.0.1:4222",
+    "ConnectionString": "nats://localhost:4222",
     "MaxReconnectCount": 3,
     "Timeout": "1s"
   }

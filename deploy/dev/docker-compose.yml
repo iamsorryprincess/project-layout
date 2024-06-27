@@ -1,0 +1,19 @@
+version: "3.9"
+name: project-layout-dev
+
+services:
+  service-a:
+    build:
+      context: ../../.
+      dockerfile: deploy/dev/Dockerfile-service-a
+    image: service-a
+    container_name: project-layout-dev-service-a
+    ports:
+      - "8080:8080"
+    networks:
+      - project-layout-dev-infrastructure-network
+
+networks:
+  project-layout-dev-infrastructure-network:
+    name: project-layout-dev-infrastructure-network
+    external: true
