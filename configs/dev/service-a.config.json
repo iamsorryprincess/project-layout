@@ -10,7 +10,7 @@
   },
 
   "MySQL": {
-    "ConnectionString": "test:test@tcp(localhost:3306)/testdb?parseTime=true&interpolateParams=true",
+    "ConnectionString": "test:test@tcp(project-layout-dev-mysql:3306)/testdb?parseTime=true&interpolateParams=true",
     "MaxOpenConnections": 10,
     "MaxIdleConnections": 10,
     "ConnectionMaxLifetime": "3m",
@@ -18,14 +18,14 @@
   },
 
   "Redis": {
-    "Host": "localhost:6379",
+    "Host": "project-layout-dev-redis:6379",
     "User": "",
     "Password": "",
     "DB": 0
   },
 
   "Clickhouse": {
-    "Hosts": ["localhost:9000"],
+    "Hosts": ["project-layout-dev-clickhouse:9000"],
     "User": "test",
     "Password": "test",
     "Database": "testdb",
@@ -39,7 +39,7 @@
   },
 
   "Tarantool": {
-    "Host": "localhost:3301",
+    "Host": "project-layout-dev-tarantool:3301",
     "User": "test",
     "Password": "test",
     "Timeout": "1s",
@@ -47,7 +47,7 @@
   },
 
   "Nats": {
-    "ConnectionString": "nats://localhost:4222",
+    "ConnectionString": "nats://project-layout-dev-nats:4222",
     "MaxReconnectCount": 3,
     "Timeout": "1s"
   }
