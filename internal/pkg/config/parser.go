@@ -8,7 +8,7 @@ import (
 )
 
 func Parse(serviceName string, config interface{}) error {
-	path := flag.String("c", fmt.Sprintf("configs/dev/%s.config.json", serviceName), "config path")
+	path := flag.String("c", fmt.Sprintf("configs/local/%s.config.json", serviceName), "config path")
 	flag.Parse()
 
 	file, err := os.OpenFile(*path, os.O_RDONLY, os.ModePerm)
