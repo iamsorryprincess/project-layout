@@ -8,7 +8,7 @@ import (
 )
 
 func Recovery(logger log.Logger) func(handler http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			defer func() {
 				r := recover()
@@ -33,7 +33,7 @@ func Recovery(logger log.Logger) func(handler http.Handler) http.Handler {
 				}
 			}()
 
-			handler.ServeHTTP(writer, request)
+			next.ServeHTTP(writer, request)
 		})
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"net/url"
 )
 
-func Cors(handler http.Handler) http.Handler {
+func Cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		ref := `*`
 		if refURL, err := url.Parse(request.Referer()); err == nil {
@@ -23,6 +23,6 @@ func Cors(handler http.Handler) http.Handler {
 			return
 		}
 
-		handler.ServeHTTP(writer, request)
+		next.ServeHTTP(writer, request)
 	})
 }
