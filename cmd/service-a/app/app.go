@@ -2,11 +2,14 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/config"
 	httptransport "github.com/iamsorryprincess/project-layout/cmd/service-a/http"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/repository"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/service"
+	"github.com/iamsorryprincess/project-layout/internal/app/domain"
+	sessionrepository "github.com/iamsorryprincess/project-layout/internal/app/session/repository"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/background"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/mysql"
@@ -15,6 +18,8 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/pkg/http"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/messaging/nats"
+	"github.com/iamsorryprincess/project-layout/internal/pkg/queue"
+	redisqueue "github.com/iamsorryprincess/project-layout/internal/pkg/queue/redis"
 )
 
 const serviceName = "service-a"
@@ -31,9 +36,14 @@ type App struct {
 
 	natsConn *nats.Connection
 
-	repository *repository.Repository
+	dataRepository    *repository.Repository
+	sessionRepository *sessionrepository.Repository
 
-	service *service.Service
+	sessionProducer queue.Producer[domain.Session]
+	eventProducer   queue.Producer[domain.Event]
+
+	sessionService *service.SessionService
+	dataService    *service.DataService
 
 	worker *background.Worker
 
@@ -56,6 +66,8 @@ func (a *App) Run() {
 	a.initNats()
 
 	a.initRepositories()
+
+	a.initQueue()
 
 	a.initServices()
 
@@ -118,22 +130,29 @@ func (a *App) initNats() {
 }
 
 func (a *App) initRepositories() {
-	a.repository = repository.New()
+	a.dataRepository = repository.New()
+	a.sessionRepository = sessionrepository.NewRepository("session", time.Minute*15, a.redisConn)
+}
+
+func (a *App) initQueue() {
+	a.sessionProducer = redisqueue.NewProducer[domain.Session]("sessions", a.redisConn)
+	a.eventProducer = redisqueue.NewProducer[domain.Event]("events", a.redisConn)
 }
 
 func (a *App) initServices() {
-	a.service = service.NewService(a.repository, a.logger)
+	a.sessionService = service.NewSessionService(a.logger, a.sessionRepository, a.sessionProducer)
+	a.dataService = service.NewDataService(a.logger, a.eventProducer, a.dataRepository)
 }
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger)
-	if _, err := a.worker.StartWithInterval(a.ctx, "printing data", a.config.Interval.Duration, a.service.PrintData); err != nil {
+	if _, err := a.worker.StartWithInterval(a.ctx, "printing data", a.config.Interval.Duration, a.dataService.PrintData); err != nil {
 		a.logger.Fatal().Str("type", "worker").Msg("failed to start printing data worker")
 	}
 }
 
 func (a *App) initHTTP() {
-	router := httptransport.NewRouter(a.repository, a.logger)
+	router := httptransport.NewRouter(a.dataService, a.sessionService, a.logger)
 	a.httpServer = http.NewServer(a.config.HTTP, a.logger, router)
 	a.httpServer.Start()
 }

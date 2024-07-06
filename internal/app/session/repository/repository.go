@@ -45,9 +45,9 @@ func (r *Repository) Get(ctx context.Context, ip string) (domain.Session, error)
 	return result, nil
 }
 
-func (r *Repository) UpdateTTL(ctx context.Context, ip string, ttl time.Duration) error {
+func (r *Repository) UpdateTTL(ctx context.Context, ip string) error {
 	key := fmt.Sprintf("%s:%s", r.key, ip)
-	if err := r.conn.Expire(ctx, key, ttl).Err(); err != nil {
+	if err := r.conn.Expire(ctx, key, r.ttl).Err(); err != nil {
 		return fmt.Errorf("redis failed to update ttl session: %w", err)
 	}
 	return nil
