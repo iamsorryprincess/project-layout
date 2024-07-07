@@ -55,7 +55,8 @@ func New() *App {
 }
 
 func (a *App) Run() {
-	a.ctx = context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	a.ctx = ctx
 
 	a.initConfig()
 
@@ -79,6 +80,7 @@ func (a *App) Run() {
 
 	stopSignal := background.Wait()
 
+	cancel()
 	a.close()
 
 	a.logger.Info().Str("stop_signal", stopSignal.String()).Msg("service stopped")

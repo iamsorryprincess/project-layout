@@ -39,7 +39,7 @@ func NewWorker(logger log.Logger) *Worker {
 		mu:        sync.Mutex{},
 		isStopped: false,
 		items:     make(map[string]workerItem),
-		logger:    logger,
+		logger:    newLogger(logger),
 	}
 }
 
@@ -66,18 +66,12 @@ func (w *Worker) Start(ctx context.Context, name string, fn WorkerFunc) (string,
 		for {
 			select {
 			case <-closeChan:
-				w.logger.Debug().
-					Str("type", "worker").
-					Str("worker", name).
-					Msg("worker stopped")
+				w.logger.Debug().Str("worker", name).Msg("worker stopped")
 				return
 			default:
 				now := time.Now()
 				w.runWorkerFunc(ctx, name, fn)
-				w.logger.Debug().
-					Str("type", "worker").
-					Str("worker", name).
-					Msgf("worker %s finished in %s", name, time.Since(now))
+				w.logger.Debug().Str("worker", name).Msgf("worker %s finished in %s", name, time.Since(now))
 			}
 		}
 	}()
@@ -105,24 +99,23 @@ func (w *Worker) StartWithInterval(ctx context.Context, name string, interval ti
 
 	go func() {
 		defer w.wg.Done()
+
+		now := time.Now()
+		w.runWorkerFunc(ctx, name, fn)
+		w.logger.Debug().Str("worker", name).Msgf("worker %s finished in %s", name, time.Since(now))
+
 		timer := time.NewTimer(interval)
 		defer timer.Stop()
 
 		for {
 			select {
 			case <-closeChan:
-				w.logger.Debug().
-					Str("type", "worker").
-					Str("worker", name).
-					Msg("worker stopped")
+				w.logger.Debug().Str("worker", name).Msg("worker stopped")
 				return
 			case <-timer.C:
-				now := time.Now()
+				now = time.Now()
 				w.runWorkerFunc(ctx, name, fn)
-				w.logger.Debug().
-					Str("type", "worker").
-					Str("worker", name).
-					Msgf("worker %s finished in %s", name, time.Since(now))
+				w.logger.Debug().Str("worker", name).Msgf("worker %s finished in %s", name, time.Since(now))
 				timer.Reset(interval)
 			}
 		}
@@ -145,10 +138,7 @@ func (w *Worker) Run(ctx context.Context, name string, fn WorkerFunc) error {
 		defer w.wg.Done()
 		now := time.Now()
 		w.runWorkerFunc(ctx, name, fn)
-		w.logger.Debug().
-			Str("type", "worker").
-			Str("worker", name).
-			Msgf("worker %s finished in %s", name, time.Since(now))
+		w.logger.Debug().Str("worker", name).Msgf("worker %s finished in %s", name, time.Since(now))
 	}()
 
 	return nil
@@ -184,10 +174,7 @@ func (w *Worker) StopAll() {
 func (w *Worker) runWorkerFunc(ctx context.Context, name string, fn WorkerFunc) {
 	defer w.recovery(name)
 	if err := fn(ctx); err != nil {
-		w.logger.Error().
-			Str("type", "worker").
-			Str("worker", name).
-			Msgf("worker failed with err: %v", err)
+		w.logger.Error().Str("worker", name).Msgf("worker failed with err: %v", err)
 	}
 }
 
@@ -203,9 +190,6 @@ func (w *Worker) recovery(name string) {
 			err = fmt.Errorf("unknown error: %v", t)
 		}
 
-		w.logger.Error().
-			Str("type", "worker").
-			Str("worker", name).
-			Msgf("worker recovered from panic: %v", err)
+		w.logger.Error().Str("worker", name).Msgf("worker recovered from panic: %v", err)
 	}
 }

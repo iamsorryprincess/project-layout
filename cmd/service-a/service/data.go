@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/model"
 	"github.com/iamsorryprincess/project-layout/internal/app/domain"
@@ -30,9 +31,11 @@ func NewDataService(logger log.Logger, producer queue.Producer[domain.Event], re
 }
 
 func (s *DataService) SaveData(ctx context.Context, input model.DataInput) error {
-	events := make([]domain.Event, 100)
+	events := make([]domain.Event, 100000)
+	now := time.Now()
 	for i := range events {
 		events[i] = domain.Event{
+			CreatedAt:  now,
 			IP:         input.Session.IP,
 			CountryID:  input.Session.CountryID,
 			PlatformID: input.Session.PlatformID,

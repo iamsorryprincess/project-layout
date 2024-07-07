@@ -13,6 +13,15 @@ services:
     networks:
       - project-layout-dev-infrastructure-network
 
+  service-b:
+    build:
+      context: ../../.
+      dockerfile: deploy/dev/Dockerfile-service-b
+    image: service-b
+    container_name: project-layout-dev-service-b
+    networks:
+      - project-layout-dev-infrastructure-network
+
 networks:
   project-layout-dev-infrastructure-network:
     name: project-layout-dev-infrastructure-network
