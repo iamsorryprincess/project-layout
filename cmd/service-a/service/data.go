@@ -47,7 +47,7 @@ func (s *DataService) SaveData(ctx context.Context, input model.DataInput) error
 			Str("type", "data_service").
 			Str("ip", input.Session.IP).
 			Str("country", input.Session.CountryID).
-			Int("platform", input.Session.PlatformID).
+			Uint8("platform", input.Session.PlatformID).
 			Msgf("failed to produce events: %v", err)
 	}
 

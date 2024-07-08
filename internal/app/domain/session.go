@@ -9,7 +9,7 @@ type Session struct {
 	Datetime   time.Time `json:"datetime"`
 	IP         string    `json:"ip"`
 	CountryID  string    `json:"countryId"`
-	PlatformID int       `json:"platformId"`
+	PlatformID uint8     `json:"platformId"`
 
 	UtmContent  string `json:"utmContent"`
 	UtmTerm     string `json:"utmTerm"`

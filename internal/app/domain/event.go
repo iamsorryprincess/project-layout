@@ -7,5 +7,5 @@ type Event struct {
 	CreatedAt  time.Time `json:"createdAt"`
 	IP         string    `json:"ip"`
 	CountryID  string    `json:"countryId"`
-	PlatformID int       `json:"platformId"`
+	PlatformID uint8     `json:"platformId"`
 }
