@@ -98,6 +98,7 @@ func (c *Consumer[TMessage]) consume(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 
+	c.logger.Debug().Msgf("%d messages successfully handled", len(result))
 	removeFile(c.fileName, c.logger)
 	return count, nil
 }

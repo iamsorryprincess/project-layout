@@ -47,8 +47,6 @@ func (c *Consumer[TMessage]) Consume(ctx context.Context) ([]TMessage, int64, er
 		}
 	}
 
-	c.logger.Debug().Msgf("%d messages successfully handled", len(messages))
-
 	count, err := c.conn.LLen(ctx, c.key).Result()
 	if err != nil {
 		return nil, 0, fmt.Errorf("redis LLEN error: %v", err)

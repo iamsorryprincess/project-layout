@@ -19,7 +19,6 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/messaging/nats"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/queue"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/queue/cache"
 	redisqueue "github.com/iamsorryprincess/project-layout/internal/pkg/queue/redis"
 )
 
@@ -41,7 +40,7 @@ type App struct {
 	sessionRepository *sessionrepository.Repository
 
 	sessionProducer queue.Producer[domain.Session]
-	eventProducer   *cache.Producer[domain.Event]
+	eventProducer   queue.Producer[domain.Event]
 
 	sessionService *service.SessionService
 	dataService    *service.DataService
@@ -139,7 +138,7 @@ func (a *App) initRepositories() {
 
 func (a *App) initQueue() {
 	a.sessionProducer = redisqueue.NewProducer[domain.Session]("sessions", a.redisConn)
-	a.eventProducer = cache.NewProducer[domain.Event]("events", a.logger, redisqueue.NewProducer[domain.Event]("events", a.redisConn))
+	a.eventProducer = redisqueue.NewProducer[domain.Event]("events", a.redisConn)
 }
 
 func (a *App) initServices() {
@@ -149,9 +148,6 @@ func (a *App) initServices() {
 
 func (a *App) initWorkers() {
 	a.worker = background.NewWorker(a.logger)
-	if _, err := a.worker.StartWithInterval(a.ctx, "sending event messages", time.Minute, a.eventProducer.Send); err != nil {
-		a.logger.Fatal().Str("type", "worker").Msg("failed to start sending event messages worker")
-	}
 }
 
 func (a *App) initHTTP() {
@@ -162,11 +158,6 @@ func (a *App) initHTTP() {
 
 func (a *App) close() {
 	a.httpServer.Stop()
-
-	if err := a.eventProducer.Send(context.Background()); err != nil {
-		a.logger.Error().Str("type", "events_producer").Msgf("failed to send events: %v", err)
-	}
-
 	a.worker.StopAll()
 	a.natsConn.Close()
 	a.mysqlConn.Close()
