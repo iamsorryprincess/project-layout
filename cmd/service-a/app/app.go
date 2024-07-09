@@ -139,7 +139,7 @@ func (a *App) initRepositories() {
 
 func (a *App) initQueue() {
 	a.sessionProducer = redisqueue.NewProducer[domain.Session]("sessions", a.redisConn)
-	a.eventProducer = cache.NewProducer[domain.Event](a.logger, redisqueue.NewProducer[domain.Event]("events", a.redisConn))
+	a.eventProducer = cache.NewProducer[domain.Event]("events", a.logger, redisqueue.NewProducer[domain.Event]("events", a.redisConn))
 }
 
 func (a *App) initServices() {

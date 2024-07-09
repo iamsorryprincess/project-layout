@@ -21,4 +21,4 @@ configs/prod
 deploy/stage
 deploy/prod
 
-**.logs.events
+**.logs.**
