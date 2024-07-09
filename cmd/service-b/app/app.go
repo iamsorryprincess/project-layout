@@ -10,6 +10,7 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
+	"github.com/iamsorryprincess/project-layout/internal/pkg/queue/cache"
 	redisqueue "github.com/iamsorryprincess/project-layout/internal/pkg/queue/redis"
 )
 
@@ -25,7 +26,7 @@ type App struct {
 
 	eventRepository *repository.EventRepository
 
-	eventConsumer *redisqueue.Consumer[domain.Event]
+	eventConsumer *cache.Consumer[domain.Event]
 
 	worker *background.Worker
 }
@@ -90,7 +91,9 @@ func (a *App) initRepositories() {
 }
 
 func (a *App) initQueue() {
-	a.eventConsumer = redisqueue.NewConsumer[domain.Event]("events", a.config.EventsConsumeCount, a.logger, a.redisConn, a.eventRepository.Save)
+	eventProducer := redisqueue.NewProducer[domain.Event]("events", a.redisConn)
+	redisEventConsumer := redisqueue.NewConsumer[domain.Event]("events", a.config.EventsConsumeCount, a.logger, a.redisConn)
+	a.eventConsumer = cache.NewConsumer[domain.Event]("events", a.logger, a.eventRepository, eventProducer, redisEventConsumer)
 }
 
 func (a *App) initWorkers() {
