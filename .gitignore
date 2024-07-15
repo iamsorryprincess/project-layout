@@ -15,10 +15,4 @@
 
 *.sql
 
-configs/stage
-configs/prod
-
-deploy/stage
-deploy/prod
-
 **.logs.**

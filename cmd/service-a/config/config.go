@@ -1,6 +1,9 @@
 package config
 
 import (
+	"flag"
+	"fmt"
+
 	"github.com/iamsorryprincess/project-layout/internal/pkg/config"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/database/mysql"
@@ -31,8 +34,11 @@ type Config struct {
 }
 
 func New(serviceName string) (Config, error) {
+	path := flag.String("c", fmt.Sprintf("configs/local/%s.config.json", serviceName), "config path")
+	flag.Parse()
+
 	var cfg Config
-	if err := config.Parse(serviceName, &cfg); err != nil {
+	if err := config.Parse(*path, &cfg); err != nil {
 		return Config{}, err
 	}
 	return cfg, nil
