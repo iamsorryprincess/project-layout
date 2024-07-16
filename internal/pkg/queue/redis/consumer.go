@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	redisdb "github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
 	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
@@ -40,16 +41,22 @@ func (c *Consumer[TMessage]) Consume(ctx context.Context) ([]TMessage, int64, er
 
 	c.logger.Debug().Msgf("redis LPOP %d messages from list", len(result))
 
+	var errs []string
 	messages := make([]TMessage, len(result))
 	for i, data := range result {
 		if err = json.Unmarshal([]byte(data), &messages[i]); err != nil {
-			return nil, 0, fmt.Errorf("failed unmarshalling message: %v", err)
+			errs = append(errs, fmt.Sprintf("failed unmarshalling message: %v", err))
 		}
+	}
+
+	if len(errs) > 0 {
+		c.logger.Error().Msgf(strings.Join(errs, ";"))
 	}
 
 	count, err := c.conn.LLen(ctx, c.key).Result()
 	if err != nil {
-		return nil, 0, fmt.Errorf("redis LLEN error: %v", err)
+		c.logger.Error().Msgf("LLEN error: %v", err)
+		return messages, 0, nil
 	}
 
 	return messages, count, nil
