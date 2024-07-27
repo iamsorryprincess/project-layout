@@ -93,7 +93,7 @@ func (a *App) initRepositories() {
 func (a *App) initQueue() {
 	eventProducer := redisqueue.NewProducer[domain.Event]("events", a.redisConn)
 	redisEventConsumer := redisqueue.NewConsumer[domain.Event]("events", a.config.EventsConsumeCount, a.logger, a.redisConn)
-	a.eventConsumer = cache.NewConsumer[domain.Event]("events", a.logger, a.eventRepository, eventProducer, redisEventConsumer)
+	a.eventConsumer = cache.NewConsumer[domain.Event]("events", a.config.EventsConsumeCount, a.logger, a.eventRepository, eventProducer, redisEventConsumer)
 }
 
 func (a *App) initWorkers() {

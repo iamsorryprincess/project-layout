@@ -12,6 +12,7 @@ import (
 
 type Consumer[TMessage any] struct {
 	fileName string
+	count    int64
 
 	logger   log.Logger
 	handler  queue.MessageHandler[TMessage]
@@ -21,6 +22,7 @@ type Consumer[TMessage any] struct {
 
 func NewConsumer[TMessage any](
 	key string,
+	count int,
 	logger log.Logger,
 	handler queue.MessageHandler[TMessage],
 	producer queue.Producer[TMessage],
@@ -28,6 +30,7 @@ func NewConsumer[TMessage any](
 ) *Consumer[TMessage] {
 	return &Consumer[TMessage]{
 		fileName: fmt.Sprintf("consumer.logs.%s", key),
+		count:    int64(count),
 		logger:   newLogger(key, "consumer", logger),
 		handler:  handler,
 		producer: producer,
@@ -45,7 +48,7 @@ func (c *Consumer[TMessage]) Consume(ctx context.Context) error {
 		return nil
 	}
 
-	for count > 0 {
+	for count >= c.count {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
