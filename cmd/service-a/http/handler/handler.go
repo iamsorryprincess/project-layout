@@ -6,7 +6,8 @@ import (
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/model"
 	"github.com/iamsorryprincess/project-layout/internal/domain"
-	httputils "github.com/iamsorryprincess/project-layout/internal/http"
+	"github.com/iamsorryprincess/project-layout/internal/http/request"
+	"github.com/iamsorryprincess/project-layout/internal/http/response"
 	"github.com/iamsorryprincess/project-layout/internal/log"
 )
 
@@ -32,12 +33,12 @@ func NewHandler(logger log.Logger, sessionProvider SessionProvider, dataProvider
 	}
 }
 
-func (h *Handler) SaveData(writer http.ResponseWriter, request *http.Request) {
+func (h *Handler) SaveData(request *request.Request, response *response.Response) {
 	query := request.URL.Query()
 	sessionInput := model.SessionInput{
 		Method:      request.Method,
 		URL:         request.RequestURI,
-		IP:          httputils.ParseIP(request),
+		IP:          request.IP,
 		UtmContent:  query.Get("utm_content"),
 		UtmTerm:     query.Get("utm_term"),
 		UtmCampaign: query.Get("utm_campaign"),
@@ -47,13 +48,8 @@ func (h *Handler) SaveData(writer http.ResponseWriter, request *http.Request) {
 
 	session, err := h.sessionProvider.Get(request.Context(), sessionInput)
 	if err != nil {
-		h.logger.Error().
-			Str("type", "http").
-			Str("method", request.Method).
-			Str("url", request.RequestURI).
-			Int("code", http.StatusInternalServerError).
-			Msgf("get session failed: %v", err)
-		writer.WriteHeader(http.StatusInternalServerError)
+		request.LogErrorWithCode(http.StatusInternalServerError, "get session failed: %v", err)
+		response.Status(http.StatusInternalServerError)
 	}
 
 	input := model.DataInput{
@@ -62,15 +58,10 @@ func (h *Handler) SaveData(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	if err = h.dataProvider.SaveData(request.Context(), input); err != nil {
-		h.logger.Error().
-			Str("type", "http").
-			Str("method", request.Method).
-			Str("url", request.RequestURI).
-			Int("code", http.StatusInternalServerError).
-			Msgf("save data failed: %v", err)
-		writer.WriteHeader(http.StatusInternalServerError)
+		request.LogErrorWithCode(http.StatusInternalServerError, "save data failed: %v", err)
+		response.Status(http.StatusInternalServerError)
 		return
 	}
 
-	writer.WriteHeader(http.StatusOK)
+	response.Status(http.StatusOK)
 }

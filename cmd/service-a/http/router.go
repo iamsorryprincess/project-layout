@@ -1,25 +1,23 @@
 package http
 
 import (
-	"net/http"
-
-	"github.com/go-chi/chi/v5"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/http/handler"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/http/middleware"
+	"github.com/iamsorryprincess/project-layout/internal/http"
 	middlewarecommon "github.com/iamsorryprincess/project-layout/internal/http/middleware"
 	"github.com/iamsorryprincess/project-layout/internal/log"
 )
 
-func NewRouter(dataProvider handler.DataProvider, sessionProvider handler.SessionProvider, logger log.Logger) http.Handler {
-	router := chi.NewRouter()
+func NewRouter(dataProvider handler.DataProvider, sessionProvider handler.SessionProvider, logger log.Logger) *http.Router {
+	router := http.NewRouter(logger)
 
-	router.Use(middlewarecommon.Recovery(logger))
+	router.Use(middlewarecommon.Recovery)
 	router.Use(middlewarecommon.Cors)
-	router.Use(middleware.Test(logger))
+	router.Use(middleware.Test)
 
 	h := handler.NewHandler(logger, sessionProvider, dataProvider)
 
-	router.Get("/test", h.SaveData)
+	router.Route("/test", h.SaveData)
 
 	return router
 }

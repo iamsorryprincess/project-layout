@@ -32,7 +32,7 @@ func main() {
 	router.HandleFunc("/test", func(writer http.ResponseWriter, request *http.Request) {
 		event := domain.Event{
 			CreatedAt:  time.Now(),
-			IP:         httputils.ParseIP(request),
+			IP:         "",
 			CountryID:  "RU",
 			PlatformID: 1,
 		}

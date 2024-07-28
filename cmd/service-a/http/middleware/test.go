@@ -1,20 +1,14 @@
 package middleware
 
 import (
-	"net/http"
-
-	"github.com/iamsorryprincess/project-layout/internal/log"
+	"github.com/iamsorryprincess/project-layout/internal/http"
+	"github.com/iamsorryprincess/project-layout/internal/http/request"
+	"github.com/iamsorryprincess/project-layout/internal/http/response"
 )
 
-func Test(logger log.Logger) func(handler http.Handler) http.Handler {
-	return func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			logger.Info().
-				Str("type", "http").
-				Str("method", request.Method).
-				Str("url", request.RequestURI).
-				Msg("test")
-			handler.ServeHTTP(writer, request)
-		})
+func Test(next http.HandlerFunc) http.HandlerFunc {
+	return func(request *request.Request, response *response.Response) {
+		request.LogInfo("test")
+		next(request, response)
 	}
 }
