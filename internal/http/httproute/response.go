@@ -1,4 +1,4 @@
-package response
+package httproute
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ type Response struct {
 	writer http.ResponseWriter
 }
 
-func NewResponse(writer http.ResponseWriter, logger log.Logger) *Response {
+func newResponse(writer http.ResponseWriter, logger log.Logger) *Response {
 	return &Response{
 		writer: writer,
 		logger: logger,
@@ -31,7 +31,9 @@ func (r *Response) Write(data []byte) (int, error) {
 	return r.writer.Write(data)
 }
 
-func (r *Response) Text(text string) error {
+func (r *Response) Text(code int, text string) error {
+	r.writer.Header().Set("Content-Type", "text/plain")
+	r.writer.WriteHeader(code)
 	_, err := r.writer.Write([]byte(text))
 	return err
 }

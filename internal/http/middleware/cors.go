@@ -2,16 +2,14 @@ package middleware
 
 import (
 	"fmt"
-	httpnet "net/http"
+	"net/http"
 	"net/url"
 
-	"github.com/iamsorryprincess/project-layout/internal/http"
-	"github.com/iamsorryprincess/project-layout/internal/http/request"
-	"github.com/iamsorryprincess/project-layout/internal/http/response"
+	"github.com/iamsorryprincess/project-layout/internal/http/httproute"
 )
 
-func Cors(next http.HandlerFunc) http.HandlerFunc {
-	return func(request *request.Request, response *response.Response) {
+func Cors(next httproute.HandlerFunc) httproute.HandlerFunc {
+	return func(request *httproute.Request, response *httproute.Response) {
 		ref := `*`
 		if refURL, err := url.Parse(request.Referer()); err == nil {
 			ref = fmt.Sprintf("%s://%s", refURL.Scheme, refURL.Host)
@@ -22,8 +20,8 @@ func Cors(next http.HandlerFunc) http.HandlerFunc {
 		response.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
 		response.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Requested-With")
 
-		if request.Method == httpnet.MethodOptions {
-			response.Status(httpnet.StatusOK)
+		if request.Method == http.MethodOptions {
+			response.Status(http.StatusOK)
 			return
 		}
 

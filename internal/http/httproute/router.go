@@ -1,14 +1,12 @@
-package http
+package httproute
 
 import (
 	"net/http"
 
-	"github.com/iamsorryprincess/project-layout/internal/http/request"
-	"github.com/iamsorryprincess/project-layout/internal/http/response"
 	"github.com/iamsorryprincess/project-layout/internal/log"
 )
 
-type HandlerFunc func(request *request.Request, response *response.Response)
+type HandlerFunc func(request *Request, response *Response)
 
 type MiddlewareFunc func(next HandlerFunc) HandlerFunc
 
@@ -40,7 +38,7 @@ func (r *Router) Route(pattern string, handler HandlerFunc) {
 	}
 
 	r.mux.HandleFunc(pattern, func(writer http.ResponseWriter, req *http.Request) {
-		handler(request.NewRequest(req, r.logger), response.NewResponse(writer, r.logger))
+		handler(newRequest(req, r.logger), newResponse(writer, r.logger))
 	})
 }
 
@@ -52,6 +50,6 @@ func (r *Router) RouteWith(pattern string, handler HandlerFunc, middlewares ...M
 		handler = middlewares[i](handler)
 	}
 	r.mux.HandleFunc(pattern, func(writer http.ResponseWriter, req *http.Request) {
-		handler(request.NewRequest(req, r.logger), response.NewResponse(writer, r.logger))
+		handler(newRequest(req, r.logger), newResponse(writer, r.logger))
 	})
 }

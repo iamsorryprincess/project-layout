@@ -6,8 +6,7 @@ import (
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/model"
 	"github.com/iamsorryprincess/project-layout/internal/domain"
-	"github.com/iamsorryprincess/project-layout/internal/http/request"
-	"github.com/iamsorryprincess/project-layout/internal/http/response"
+	"github.com/iamsorryprincess/project-layout/internal/http/httproute"
 	"github.com/iamsorryprincess/project-layout/internal/log"
 )
 
@@ -33,7 +32,7 @@ func NewHandler(logger log.Logger, sessionProvider SessionProvider, dataProvider
 	}
 }
 
-func (h *Handler) SaveData(request *request.Request, response *response.Response) {
+func (h *Handler) SaveData(request *httproute.Request, response *httproute.Response) {
 	query := request.URL.Query()
 	sessionInput := model.SessionInput{
 		Method:      request.Method,

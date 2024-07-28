@@ -3,8 +3,7 @@ module github.com/iamsorryprincess/project-layout
 go 1.22.2
 
 require (
-	github.com/ClickHouse/clickhouse-go/v2 v2.25.0
-	github.com/go-chi/chi/v5 v5.0.14
+	github.com/ClickHouse/clickhouse-go/v2 v2.26.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
 	github.com/nats-io/nats.go v1.36.0

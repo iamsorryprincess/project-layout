@@ -1,4 +1,4 @@
-package request
+package httproute
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ type Request struct {
 	IP string
 }
 
-func NewRequest(request *http.Request, logger log.Logger) *Request {
+func newRequest(request *http.Request, logger log.Logger) *Request {
 	ip := request.Header.Get("X-Real-IP")
 	if ip == "" {
 		ip = request.Header.Get("X-Forwarded-For")

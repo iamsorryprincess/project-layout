@@ -3,13 +3,13 @@ package http
 import (
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/http/handler"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/http/middleware"
-	"github.com/iamsorryprincess/project-layout/internal/http"
+	"github.com/iamsorryprincess/project-layout/internal/http/httproute"
 	middlewarecommon "github.com/iamsorryprincess/project-layout/internal/http/middleware"
 	"github.com/iamsorryprincess/project-layout/internal/log"
 )
 
-func NewRouter(dataProvider handler.DataProvider, sessionProvider handler.SessionProvider, logger log.Logger) *http.Router {
-	router := http.NewRouter(logger)
+func NewRouter(dataProvider handler.DataProvider, sessionProvider handler.SessionProvider, logger log.Logger) *httproute.Router {
+	router := httproute.NewRouter(logger)
 
 	router.Use(middlewarecommon.Recovery)
 	router.Use(middlewarecommon.Cors)
