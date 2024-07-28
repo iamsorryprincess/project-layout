@@ -14,26 +14,23 @@ type Connection struct {
 
 func New(config Config, logger log.Logger) (*Connection, error) {
 	maxReconnectCount := -1
-	if config.MaxReconnectCount != nil {
-		maxReconnectCount = *config.MaxReconnectCount
+	if config.MaxReconnectCount != 0 {
+		maxReconnectCount = config.MaxReconnectCount
 	}
 
 	reconnectWait := time.Second * 2
-	if config.ReconnectWait != nil {
-		val := *config.ReconnectWait
-		reconnectWait = val.Duration
+	if config.ReconnectWait.Duration != 0 {
+		reconnectWait = config.ReconnectWait.Duration
 	}
 
 	timeout := time.Second * 2
-	if config.Timeout != nil {
-		val := *config.Timeout
-		timeout = val.Duration
+	if config.Timeout.Duration != 0 {
+		timeout = config.Timeout.Duration
 	}
 
 	pingInterval := time.Minute * 2
-	if config.PingInterval != nil {
-		val := *config.PingInterval
-		pingInterval = val.Duration
+	if config.PingInterval.Duration != 0 {
+		pingInterval = config.PingInterval.Duration
 	}
 
 	conn, err := nats.Connect(config.ConnectionString,

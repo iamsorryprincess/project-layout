@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/model"
@@ -11,22 +10,15 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/pkg/queue"
 )
 
-type Repository interface {
-	SaveData(data string) error
-	GetData() ([]string, error)
-}
-
 type DataService struct {
-	logger     log.Logger
-	producer   queue.Producer[domain.Event]
-	repository Repository
+	logger   log.Logger
+	producer queue.Producer[domain.Event]
 }
 
-func NewDataService(logger log.Logger, producer queue.Producer[domain.Event], repository Repository) *DataService {
+func NewDataService(logger log.Logger, producer queue.Producer[domain.Event]) *DataService {
 	return &DataService{
-		logger:     logger,
-		producer:   producer,
-		repository: repository,
+		logger:   logger,
+		producer: producer,
 	}
 }
 
@@ -51,18 +43,5 @@ func (s *DataService) SaveData(ctx context.Context, input model.DataInput) error
 			Msgf("failed to produce events: %v", err)
 	}
 
-	if err := s.repository.SaveData(input.Data); err != nil {
-		return fmt.Errorf("failed to save data: %w", err)
-	}
-
-	return nil
-}
-
-func (s *DataService) PrintData(_ context.Context) error {
-	data, err := s.repository.GetData()
-	if err != nil {
-		return fmt.Errorf("failed to get data for print: %w", err)
-	}
-	s.logger.Info().Interface("data", data).Send()
 	return nil
 }

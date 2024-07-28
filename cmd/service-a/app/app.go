@@ -6,7 +6,6 @@ import (
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/config"
 	httptransport "github.com/iamsorryprincess/project-layout/cmd/service-a/http"
-	"github.com/iamsorryprincess/project-layout/cmd/service-a/repository"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/service"
 	"github.com/iamsorryprincess/project-layout/internal/app/domain"
 	sessionrepository "github.com/iamsorryprincess/project-layout/internal/app/session/repository"
@@ -36,7 +35,6 @@ type App struct {
 
 	natsConn *nats.Connection
 
-	dataRepository    *repository.Repository
 	sessionRepository *sessionrepository.Repository
 
 	sessionProducer queue.Producer[domain.Session]
@@ -132,7 +130,6 @@ func (a *App) initNats() {
 }
 
 func (a *App) initRepositories() {
-	a.dataRepository = repository.New()
 	a.sessionRepository = sessionrepository.NewRepository("session", time.Minute*15, a.redisConn)
 }
 
@@ -143,7 +140,7 @@ func (a *App) initQueue() {
 
 func (a *App) initServices() {
 	a.sessionService = service.NewSessionService(a.logger, a.sessionRepository, a.sessionProducer)
-	a.dataService = service.NewDataService(a.logger, a.eventProducer, a.dataRepository)
+	a.dataService = service.NewDataService(a.logger, a.eventProducer)
 }
 
 func (a *App) initWorkers() {
