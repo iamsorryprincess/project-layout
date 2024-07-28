@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/iamsorryprincess/project-layout/internal/app/domain"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/background"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
-	httputils "github.com/iamsorryprincess/project-layout/internal/pkg/http"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/queue/cache"
-	redisqueue "github.com/iamsorryprincess/project-layout/internal/pkg/queue/redis"
+	"github.com/iamsorryprincess/project-layout/internal/background"
+	"github.com/iamsorryprincess/project-layout/internal/database/redis"
+	"github.com/iamsorryprincess/project-layout/internal/domain"
+	httputils "github.com/iamsorryprincess/project-layout/internal/http"
+	"github.com/iamsorryprincess/project-layout/internal/log"
+	"github.com/iamsorryprincess/project-layout/internal/queue"
+	redisqueue "github.com/iamsorryprincess/project-layout/internal/queue/redis"
 )
 
 const serviceName = "test-producer-cache"
@@ -28,7 +28,7 @@ func main() {
 	defer redisConn.Close()
 
 	redisProducer := redisqueue.NewProducer[domain.Event]("events", redisConn)
-	producer := cache.NewProducer[domain.Event]("events", logger, redisProducer)
+	producer := queue.NewFileCachingProducer[domain.Event]("events", logger, redisProducer)
 
 	router := http.NewServeMux()
 

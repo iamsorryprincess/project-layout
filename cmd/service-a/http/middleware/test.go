@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
+	"github.com/iamsorryprincess/project-layout/internal/log"
 )
 
 func Test(logger log.Logger) func(handler http.Handler) http.Handler {

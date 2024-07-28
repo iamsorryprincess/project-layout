@@ -1,24 +1,21 @@
 package config
 
 import (
-	"flag"
-	"fmt"
-
-	"github.com/iamsorryprincess/project-layout/internal/pkg/config"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/mysql"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/tarantool"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/http"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/messaging/nats"
+	"github.com/iamsorryprincess/project-layout/internal/configuration"
+	"github.com/iamsorryprincess/project-layout/internal/database/clickhouse"
+	"github.com/iamsorryprincess/project-layout/internal/database/mysql"
+	"github.com/iamsorryprincess/project-layout/internal/database/redis"
+	"github.com/iamsorryprincess/project-layout/internal/database/tarantool"
+	"github.com/iamsorryprincess/project-layout/internal/http"
+	"github.com/iamsorryprincess/project-layout/internal/messaging/nats"
 )
 
 type Config struct {
 	LogLevel    string
-	Timeout     config.Duration
+	Timeout     configuration.Duration
 	Coefficient float64
-	Expire      config.Duration
-	Interval    config.Duration
+	Expire      configuration.Duration
+	Interval    configuration.Duration
 
 	HTTP http.Config
 
@@ -31,15 +28,4 @@ type Config struct {
 	Tarantool tarantool.Config
 
 	Nats nats.Config
-}
-
-func New(serviceName string) (Config, error) {
-	path := flag.String("c", fmt.Sprintf("configs/local/%s.config.json", serviceName), "config path")
-	flag.Parse()
-
-	var cfg Config
-	if err := config.Parse(*path, &cfg); err != nil {
-		return Config{}, err
-	}
-	return cfg, nil
 }

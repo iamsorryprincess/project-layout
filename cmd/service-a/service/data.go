@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/model"
-	"github.com/iamsorryprincess/project-layout/internal/app/domain"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/queue"
+	"github.com/iamsorryprincess/project-layout/internal/domain"
+	"github.com/iamsorryprincess/project-layout/internal/log"
+	"github.com/iamsorryprincess/project-layout/internal/queue"
 )
 
 type DataService struct {

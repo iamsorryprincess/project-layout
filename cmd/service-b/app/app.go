@@ -5,13 +5,14 @@ import (
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-b/config"
 	"github.com/iamsorryprincess/project-layout/cmd/service-b/repository"
-	"github.com/iamsorryprincess/project-layout/internal/app/domain"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/background"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/queue/cache"
-	redisqueue "github.com/iamsorryprincess/project-layout/internal/pkg/queue/redis"
+	"github.com/iamsorryprincess/project-layout/internal/background"
+	"github.com/iamsorryprincess/project-layout/internal/configuration"
+	"github.com/iamsorryprincess/project-layout/internal/database/clickhouse"
+	"github.com/iamsorryprincess/project-layout/internal/database/redis"
+	"github.com/iamsorryprincess/project-layout/internal/domain"
+	"github.com/iamsorryprincess/project-layout/internal/log"
+	"github.com/iamsorryprincess/project-layout/internal/queue"
+	redisqueue "github.com/iamsorryprincess/project-layout/internal/queue/redis"
 )
 
 const serviceName = "service-b"
@@ -26,7 +27,7 @@ type App struct {
 
 	eventRepository *repository.EventRepository
 
-	eventConsumer *cache.Consumer[domain.Event]
+	eventConsumer *queue.FileCachingConsumer[domain.Event]
 
 	worker *background.Worker
 }
@@ -62,10 +63,7 @@ func (a *App) Run() {
 }
 
 func (a *App) initConfig() {
-	var err error
-	a.config, err = config.New(serviceName)
-
-	if err != nil {
+	if err := configuration.Parse(configuration.TypeJSON, serviceName, &a.config); err != nil {
 		logger := log.New("fatal", serviceName)
 		logger.Fatal().Str("type", "config").Msgf("failed to load config: %v", err)
 	}
@@ -93,7 +91,7 @@ func (a *App) initRepositories() {
 func (a *App) initQueue() {
 	eventProducer := redisqueue.NewProducer[domain.Event]("events", a.redisConn)
 	redisEventConsumer := redisqueue.NewConsumer[domain.Event]("events", a.config.EventsConsumeCount, a.logger, a.redisConn)
-	a.eventConsumer = cache.NewConsumer[domain.Event]("events", a.config.EventsConsumeCount, a.logger, a.eventRepository, eventProducer, redisEventConsumer)
+	a.eventConsumer = queue.NewFileCachingConsumer[domain.Event]("events", a.config.EventsConsumeCount, a.logger, a.eventRepository, eventProducer, redisEventConsumer)
 }
 
 func (a *App) initWorkers() {

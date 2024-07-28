@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/iamsorryprincess/project-layout/internal/app/domain"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
+	"github.com/iamsorryprincess/project-layout/internal/database/clickhouse"
+	"github.com/iamsorryprincess/project-layout/internal/domain"
 )
 
 type EventRepository struct {

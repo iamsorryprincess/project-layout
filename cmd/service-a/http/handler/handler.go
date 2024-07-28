@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/model"
-	"github.com/iamsorryprincess/project-layout/internal/app/domain"
-	httputils "github.com/iamsorryprincess/project-layout/internal/pkg/http"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
+	"github.com/iamsorryprincess/project-layout/internal/domain"
+	httputils "github.com/iamsorryprincess/project-layout/internal/http"
+	"github.com/iamsorryprincess/project-layout/internal/log"
 )
 
 type SessionProvider interface {

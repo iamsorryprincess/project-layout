@@ -7,18 +7,19 @@ import (
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/config"
 	httptransport "github.com/iamsorryprincess/project-layout/cmd/service-a/http"
 	"github.com/iamsorryprincess/project-layout/cmd/service-a/service"
-	"github.com/iamsorryprincess/project-layout/internal/app/domain"
-	sessionrepository "github.com/iamsorryprincess/project-layout/internal/app/session/repository"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/background"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/clickhouse"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/mysql"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/tarantool"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/http"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/messaging/nats"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/queue"
-	redisqueue "github.com/iamsorryprincess/project-layout/internal/pkg/queue/redis"
+	"github.com/iamsorryprincess/project-layout/internal/background"
+	"github.com/iamsorryprincess/project-layout/internal/configuration"
+	"github.com/iamsorryprincess/project-layout/internal/database/clickhouse"
+	"github.com/iamsorryprincess/project-layout/internal/database/mysql"
+	"github.com/iamsorryprincess/project-layout/internal/database/redis"
+	"github.com/iamsorryprincess/project-layout/internal/database/tarantool"
+	"github.com/iamsorryprincess/project-layout/internal/domain"
+	"github.com/iamsorryprincess/project-layout/internal/http"
+	"github.com/iamsorryprincess/project-layout/internal/log"
+	"github.com/iamsorryprincess/project-layout/internal/messaging/nats"
+	"github.com/iamsorryprincess/project-layout/internal/queue"
+	redisqueue "github.com/iamsorryprincess/project-layout/internal/queue/redis"
+	sessionrepository "github.com/iamsorryprincess/project-layout/internal/session/repository"
 )
 
 const serviceName = "service-a"
@@ -85,10 +86,7 @@ func (a *App) Run() {
 }
 
 func (a *App) initConfig() {
-	var err error
-	a.config, err = config.New(serviceName)
-
-	if err != nil {
+	if err := configuration.Parse(configuration.TypeJSON, serviceName, &a.config); err != nil {
 		logger := log.New("fatal", serviceName)
 		logger.Fatal().Str("type", "config").Msgf("failed to load config: %v", err)
 	}

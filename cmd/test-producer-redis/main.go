@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/iamsorryprincess/project-layout/internal/app/domain"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/background"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/database/redis"
-	httputils "github.com/iamsorryprincess/project-layout/internal/pkg/http"
-	"github.com/iamsorryprincess/project-layout/internal/pkg/log"
-	redisqueue "github.com/iamsorryprincess/project-layout/internal/pkg/queue/redis"
+	"github.com/iamsorryprincess/project-layout/internal/background"
+	"github.com/iamsorryprincess/project-layout/internal/database/redis"
+	"github.com/iamsorryprincess/project-layout/internal/domain"
+	httputils "github.com/iamsorryprincess/project-layout/internal/http"
+	"github.com/iamsorryprincess/project-layout/internal/log"
+	redisqueue "github.com/iamsorryprincess/project-layout/internal/queue/redis"
 )
 
 const serviceName = "test-producer-redis"
