@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/iamsorryprincess/project-layout/cmd/event-api/app"
 
 func main() {
-	fmt.Println("test")
+	app.New().Run()
 }
