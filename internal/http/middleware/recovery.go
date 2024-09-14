@@ -25,6 +25,7 @@ func Recovery(logger log.Logger) func(http.Handler) http.Handler {
 
 					logger.Error().
 						Str("url", request.RequestURI).
+						Str("method", request.Method).
 						Int("status", http.StatusInternalServerError).
 						Err(err).
 						Msg("http request recovered from panic")

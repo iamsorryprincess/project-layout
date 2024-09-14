@@ -14,7 +14,7 @@ func parseJSON(path string, config interface{}) error {
 
 	if err = json.NewDecoder(file).Decode(config); err != nil {
 		if cErr := file.Close(); cErr != nil {
-			return fmt.Errorf("config failed to parse %s: %w; config failed to close file: %v", path, err, cErr)
+			return fmt.Errorf("config failed to parse %s: %w; config failed to close file: %w", path, err, cErr)
 		}
 
 		return fmt.Errorf("config failed to parse %s: %w", path, err)

@@ -22,7 +22,7 @@ func New(logger log.Logger, config Config) (*Connection, error) {
 	})
 
 	if err := client.Ping(context.Background()).Err(); err != nil {
-		return nil, fmt.Errorf("redis connection error: %v", err)
+		return nil, fmt.Errorf("redis connection error: %w", err)
 	}
 
 	return &Connection{

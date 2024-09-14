@@ -4,14 +4,18 @@ import (
 	"context"
 
 	"github.com/iamsorryprincess/project-layout/cmd/event-api/config"
+	httptransport "github.com/iamsorryprincess/project-layout/cmd/event-api/http"
 	"github.com/iamsorryprincess/project-layout/internal/background"
 	"github.com/iamsorryprincess/project-layout/internal/configuration"
 	"github.com/iamsorryprincess/project-layout/internal/database/clickhouse"
 	"github.com/iamsorryprincess/project-layout/internal/database/mysql"
 	"github.com/iamsorryprincess/project-layout/internal/database/redis"
 	"github.com/iamsorryprincess/project-layout/internal/database/tarantool"
+	"github.com/iamsorryprincess/project-layout/internal/domain"
 	"github.com/iamsorryprincess/project-layout/internal/http"
 	"github.com/iamsorryprincess/project-layout/internal/log"
+	"github.com/iamsorryprincess/project-layout/internal/queue"
+	redisqueue "github.com/iamsorryprincess/project-layout/internal/queue/redis"
 )
 
 const serviceName = "event-api"
@@ -26,6 +30,8 @@ type App struct {
 	redisConn      *redis.Connection
 	clickhouseConn *clickhouse.Connection
 	tarantoolConn  *tarantool.Connection
+
+	clickProducer queue.Producer[domain.Click]
 
 	httpServer *http.Server
 }
@@ -52,8 +58,9 @@ func (a *App) Run() {
 		return
 	}
 
-	a.httpServer = http.NewServer(a.logger, a.config.HTTP, nil)
-	a.httpServer.Start()
+	a.initQueue()
+
+	a.initHTTP()
 
 	a.logger.Info().Msg("service started")
 
@@ -64,7 +71,7 @@ func (a *App) Run() {
 
 func (a *App) initConfig() error {
 	var err error
-	if a.config, err = configuration.New[config.Config](); err != nil {
+	if a.config, err = configuration.Load[config.Config](); err != nil {
 		log.New("error", serviceName).Error().Err(err).Msg("failed to load configuration")
 		return err
 	}
@@ -98,6 +105,17 @@ func (a *App) initDatabases() error {
 	a.logger.Info().Msg("tarantool successfully connected")
 
 	return nil
+}
+
+func (a *App) initQueue() {
+	a.clickProducer = redisqueue.NewProducer[domain.Click]("clicks", a.redisConn)
+}
+
+func (a *App) initHTTP() {
+	handler := httptransport.NewHandler(a.logger, a.clickProducer)
+	router := httptransport.NewRouter(a.logger, handler)
+	a.httpServer = http.NewServer(a.logger, a.config.HTTP, router)
+	a.httpServer.Start()
 }
 
 func (a *App) close() {

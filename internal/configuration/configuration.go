@@ -2,7 +2,7 @@ package configuration
 
 import "flag"
 
-func New[TConfig any]() (TConfig, error) {
+func Load[TConfig any]() (TConfig, error) {
 	path := flag.String("c", "config.json", "configuration file path")
 	flag.Parse()
 

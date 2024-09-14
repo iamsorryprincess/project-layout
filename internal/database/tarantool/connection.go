@@ -25,11 +25,11 @@ func New(logger log.Logger, config Config) (*Connection, error) {
 		Reconnect: config.ReconnectInterval,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("tarantool connection failed: %v", err)
+		return nil, fmt.Errorf("tarantool connection failed: %w", err)
 	}
 
 	if _, err = conn.Do(tarantool.NewPingRequest()).Get(); err != nil {
-		return nil, fmt.Errorf("tarantool ping failed: %v", err)
+		return nil, fmt.Errorf("tarantool ping failed: %w", err)
 	}
 
 	return &Connection{

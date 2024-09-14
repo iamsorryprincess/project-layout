@@ -40,11 +40,11 @@ func New(logger log.Logger, config Config) (*Connection, error) {
 		BlockBufferSize:  uint8(config.BlockBufferSize),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("clickhouse connection failed: %v", err)
+		return nil, fmt.Errorf("clickhouse connection failed: %w", err)
 	}
 
 	if err = conn.Ping(context.Background()); err != nil {
-		return nil, fmt.Errorf("clickhouse ping failed %v", err)
+		return nil, fmt.Errorf("clickhouse ping failed %w", err)
 	}
 
 	return &Connection{
