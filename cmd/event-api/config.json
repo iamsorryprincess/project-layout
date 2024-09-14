@@ -1,0 +1,57 @@
+{
+  "LogLevel": "debug",
+
+  "HTTP": {
+    "Address": ":8080"
+  },
+
+  "MySQL": {
+    "ConnectionString": "test:test@tcp(project-layout-dev-mysql:3306)/testdb?parseTime=true&interpolateParams=true",
+    "MaxOpenConnections": 10,
+    "MaxIdleConnections": 10,
+    "ConnectionMaxLifetime": 180000000000,
+    "ConnectionMaxIdleTime": 180000000000
+  },
+
+  "Redis": {
+    "Host": "project-layout-dev-redis:6379",
+    "User": "",
+    "Password": "",
+    "DB": 0
+  },
+
+  "Clickhouse": {
+    "Hosts": ["project-layout-dev-clickhouse:9000"],
+    "User": "test",
+    "Password": "test",
+    "Database": "testdb",
+    "Debug": false,
+    "MaxExecutionTime": 60,
+    "DialTimeout": 30000000000,
+    "MaxOpenConnections": 5,
+    "MaxIdleConnections": 5,
+    "ConnectionMaxLifetime": 600000000000,
+    "BlockBufferSize": 10
+  },
+
+  "Tarantool": {
+    "Host": "project-layout-dev-tarantool:3301",
+    "User": "test",
+    "Password": "test",
+    "Timeout": 1000000000,
+    "ReconnectInterval": 3000000000
+  },
+
+  "Nats": {
+    "ConnectionString": "nats://project-layout-dev-nats:4222",
+    "MaxReconnectCount": 3,
+    "Timeout": 1000000000
+  },
+
+  "ClicksConsumer": {
+    "Key": "clicks",
+    "Count": 2,
+    "WorkersCount": 1,
+    "ConsumeInterval": 1000000000
+  }
+}

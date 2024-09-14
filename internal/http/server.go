@@ -10,51 +10,81 @@ import (
 )
 
 type Server struct {
-	config Config
 	logger log.Logger
+	config Config
 	server *http.Server
-	wg     sync.WaitGroup
+
+	isRunning bool
+
+	mu sync.Mutex
+	wg sync.WaitGroup
 }
 
-func NewServer(config Config, logger log.Logger, handler http.Handler) *Server {
+func NewServer(logger log.Logger, config Config, handler http.Handler) *Server {
 	return &Server{
 		config: config,
 		logger: logger,
 		server: &http.Server{
 			Addr:                         config.Address,
 			Handler:                      handler,
-			ReadTimeout:                  config.ReadTimeout.Duration,
-			ReadHeaderTimeout:            config.ReadHeaderTimeout.Duration,
-			WriteTimeout:                 config.WriteTimeout.Duration,
-			IdleTimeout:                  config.IdleTimeout.Duration,
+			ReadTimeout:                  config.ReadTimeout,
+			ReadHeaderTimeout:            config.ReadHeaderTimeout,
+			WriteTimeout:                 config.WriteTimeout,
+			IdleTimeout:                  config.IdleTimeout,
 			MaxHeaderBytes:               config.MaxHeaderBytes,
 			DisableGeneralOptionsHandler: config.DisableGeneralOptionsHandler,
 		},
+
+		isRunning: false,
+
+		mu: sync.Mutex{},
 		wg: sync.WaitGroup{},
 	}
 }
 
 func (s *Server) Start() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.isRunning {
+		s.logger.Warn().Msg("http server is already running")
+		return
+	}
+
 	s.wg.Add(1)
+	s.isRunning = true
+
 	go func() {
 		defer s.wg.Done()
-		if err := s.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.logger.Fatal().Str("type", "http").Msgf("http server listen error: %v", err)
+		if err := s.server.ListenAndServe(); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				s.logger.Info().Msg("http server successfully shutdown")
+				return
+			}
+			s.logger.Error().Err(err).Msgf("http server listen error")
 		}
 	}()
 }
 
 func (s *Server) Stop() {
-	ctx := context.Background()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	if s.config.ShutdownTimeout.Duration > 0 {
-		newCtx, cancel := context.WithTimeout(ctx, s.config.ShutdownTimeout.Duration)
+	if !s.isRunning {
+		return
+	}
+
+	s.isRunning = false
+
+	ctx := context.Background()
+	if s.config.ShutdownTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, s.config.ShutdownTimeout)
 		defer cancel()
-		ctx = newCtx
 	}
 
 	if err := s.server.Shutdown(ctx); err != nil {
-		s.logger.Error().Str("type", "http").Msgf("http server shutdown error: %v", err)
+		s.logger.Error().Err(err).Msg("http server shutdown error")
 	}
 
 	s.wg.Wait()

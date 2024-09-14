@@ -9,12 +9,11 @@ import (
 )
 
 type Connection struct {
-	*tarantool.Connection
-
 	logger log.Logger
+	*tarantool.Connection
 }
 
-func New(config Config, logger log.Logger) (*Connection, error) {
+func New(logger log.Logger, config Config) (*Connection, error) {
 	dialer := tarantool.NetDialer{
 		Address:  config.Host,
 		User:     config.User,
@@ -22,15 +21,15 @@ func New(config Config, logger log.Logger) (*Connection, error) {
 	}
 
 	conn, err := tarantool.Connect(context.Background(), dialer, tarantool.Opts{
-		Timeout:   config.Timeout.Duration,
-		Reconnect: config.ReconnectInterval.Duration,
+		Timeout:   config.Timeout,
+		Reconnect: config.ReconnectInterval,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("tarantool connection failed: %v", err)
+		return nil, fmt.Errorf("tarantool connection failed: %w", err)
 	}
 
 	if _, err = conn.Do(tarantool.NewPingRequest()).Get(); err != nil {
-		return nil, fmt.Errorf("tarantool ping failed: %v", err)
+		return nil, fmt.Errorf("tarantool ping failed: %w", err)
 	}
 
 	return &Connection{
@@ -41,6 +40,6 @@ func New(config Config, logger log.Logger) (*Connection, error) {
 
 func (c *Connection) Close() {
 	if err := c.Connection.Close(); err != nil {
-		c.logger.Error().Str("type", "tarantool").Msg("tarantool failed to close connection")
+		c.logger.Error().Err(err).Msg("tarantool failed to close connection")
 	}
 }

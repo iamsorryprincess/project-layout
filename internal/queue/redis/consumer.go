@@ -1,63 +1,128 @@
 package redis
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"strings"
+	"sync"
+	"time"
 
-	redisdb "github.com/iamsorryprincess/project-layout/internal/database/redis"
+	redisdatabase "github.com/iamsorryprincess/project-layout/internal/database/redis"
 	"github.com/iamsorryprincess/project-layout/internal/log"
+	"github.com/iamsorryprincess/project-layout/internal/queue"
 	"github.com/redis/go-redis/v9"
 )
 
-type Consumer[TMessage any] struct {
-	key   string
-	count int
+type ConsumerConfig struct {
+	Key             string
+	Count           int
+	WorkersCount    int
+	ConsumeInterval time.Duration
+}
 
+type ConsumerWorker[TMessage any] struct {
 	logger log.Logger
-	conn   *redisdb.Connection
+
+	name   string
+	config ConsumerConfig
+
+	conn     *redisdatabase.Connection
+	consumer queue.Consumer[TMessage]
+
+	wg sync.WaitGroup
 }
 
-func NewConsumer[TMessage any](key string, count int, logger log.Logger, conn *redisdb.Connection) *Consumer[TMessage] {
-	return &Consumer[TMessage]{
-		key:    key,
-		count:  count,
-		logger: newLogger(key, logger),
-		conn:   conn,
+func NewConsumerWorker[TMessage any](logger log.Logger, name string, config ConsumerConfig, conn *redisdatabase.Connection, consumer queue.Consumer[TMessage]) *ConsumerWorker[TMessage] {
+	return &ConsumerWorker[TMessage]{
+		logger:   logger,
+		name:     name,
+		config:   config,
+		conn:     conn,
+		consumer: consumer,
+		wg:       sync.WaitGroup{},
 	}
 }
 
-func (c *Consumer[TMessage]) Consume(ctx context.Context) ([]TMessage, int64, error) {
-	result, err := c.conn.LPopCount(ctx, c.key, c.count).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
-		return nil, 0, fmt.Errorf("redis LPOP error: %v", err)
+func (c *ConsumerWorker[TMessage]) Start(ctx context.Context) {
+	for i := 0; i < c.config.WorkersCount; i++ {
+		c.wg.Add(1)
+		go func(workerID int) {
+			defer c.wg.Done()
+
+			timer := time.NewTimer(c.config.ConsumeInterval)
+			defer timer.Stop()
+
+			for {
+				select {
+				case <-ctx.Done():
+					c.logger.Info().
+						Str("worker_name", c.name).
+						Int("worker_id", workerID).
+						Msg("consumer worker stopped due to context cancellation")
+					return
+				case <-timer.C:
+					if err := c.processMessages(ctx); err != nil {
+						if !errors.Is(err, context.Canceled) {
+							c.logger.Error().
+								Str("worker_name", c.name).
+								Int("worker_id", workerID).
+								Err(err).
+								Msg("error while consumer processing messages")
+						}
+					}
+					timer.Reset(c.config.ConsumeInterval)
+				}
+			}
+		}(i)
 	}
+}
 
-	if len(result) == 0 {
-		return nil, 0, nil
-	}
+func (c *ConsumerWorker[TMessage]) processMessages(ctx context.Context) error {
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 
-	c.logger.Debug().Msgf("redis LPOP %d messages from list", len(result))
+		data, err := c.conn.LPopCount(ctx, c.config.Key, c.config.Count).Result()
+		if err != nil {
+			if errors.Is(err, redis.Nil) {
+				return nil
+			}
 
-	var errs []string
-	messages := make([]TMessage, len(result))
-	for i, data := range result {
-		if err = json.Unmarshal([]byte(data), &messages[i]); err != nil {
-			errs = append(errs, fmt.Sprintf("failed unmarshalling message: %v", err))
+			return err
+		}
+
+		if len(data) == 0 {
+			return nil
+		}
+
+		var buf bytes.Buffer
+		buf.WriteString("[")
+
+		n := len(data)
+		for i, value := range data {
+			buf.WriteString(value)
+
+			if i != n-1 {
+				buf.WriteString(",")
+			}
+		}
+
+		buf.WriteString("]")
+
+		var messages []TMessage
+		if err = json.Unmarshal(buf.Bytes(), &messages); err != nil {
+			return err
+		}
+
+		if err = c.consumer.Consume(ctx, messages); err != nil {
+			return err
 		}
 	}
+}
 
-	if len(errs) > 0 {
-		c.logger.Error().Msgf(strings.Join(errs, ";"))
-	}
-
-	count, err := c.conn.LLen(ctx, c.key).Result()
-	if err != nil {
-		c.logger.Error().Msgf("LLEN error: %v", err)
-		return messages, 0, nil
-	}
-
-	return messages, count, nil
+func (c *ConsumerWorker[TMessage]) Shutdown() {
+	c.wg.Wait()
+	c.logger.Info().Msg("all consuming workers stopped")
 }

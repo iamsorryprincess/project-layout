@@ -9,12 +9,11 @@ import (
 )
 
 type Connection struct {
-	*redis.Client
-
 	logger log.Logger
+	*redis.Client
 }
 
-func New(config Config, logger log.Logger) (*Connection, error) {
+func New(logger log.Logger, config Config) (*Connection, error) {
 	client := redis.NewClient(&redis.Options{
 		Addr:     config.Host,
 		Username: config.User,
@@ -23,17 +22,17 @@ func New(config Config, logger log.Logger) (*Connection, error) {
 	})
 
 	if err := client.Ping(context.Background()).Err(); err != nil {
-		return nil, fmt.Errorf("redis connection error: %v", err)
+		return nil, fmt.Errorf("redis connection error: %w", err)
 	}
 
 	return &Connection{
-		Client: client,
 		logger: logger,
+		Client: client,
 	}, nil
 }
 
 func (c *Connection) Close() {
 	if err := c.Client.Close(); err != nil {
-		c.logger.Error().Str("type", "redis").Msg("redis failed to close connection")
+		c.logger.Error().Err(err).Msg("redis failed to close connection")
 	}
 }

@@ -4,29 +4,37 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/iamsorryprincess/project-layout/internal/http/httproute"
+	"github.com/iamsorryprincess/project-layout/internal/log"
 )
 
-func Recovery(next httproute.HandlerFunc) httproute.HandlerFunc {
-	return func(request *httproute.Request, response *httproute.Response) {
-		defer func() {
-			r := recover()
-			if r != nil {
-				var err error
-				switch t := r.(type) {
-				case string:
-					err = errors.New(t)
-				case error:
-					err = t
-				default:
-					err = errors.New("unknown error")
+func Recovery(logger log.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			defer func() {
+				r := recover()
+				if r != nil {
+					var err error
+					switch t := r.(type) {
+					case string:
+						err = errors.New(t)
+					case error:
+						err = t
+					default:
+						err = errors.New("unknown error")
+					}
+
+					logger.Error().
+						Str("url", request.RequestURI).
+						Str("method", request.Method).
+						Int("status", http.StatusInternalServerError).
+						Err(err).
+						Msg("http request recovered from panic")
+
+					writer.WriteHeader(http.StatusInternalServerError)
 				}
+			}()
 
-				request.LogErrorWithCode(http.StatusInternalServerError, "request recovery from panic: %v", err)
-				response.Status(http.StatusInternalServerError)
-			}
-		}()
-
-		next(request, response)
+			next.ServeHTTP(writer, request)
+		})
 	}
 }

@@ -20,35 +20,19 @@ func NewProducer[TMessage any](key string, conn *redis.Connection) *Producer[TMe
 	}
 }
 
-func (p *Producer[TMessage]) Produce(ctx context.Context, messages ...TMessage) error {
-	switch len(messages) {
-	case 0:
-		return nil
-	case 1:
-		data, err := json.Marshal(messages[0])
-		if err != nil {
-			return fmt.Errorf("failed to marshal message %v with key: %s: %w", messages[0], p.key, err)
-		}
-
-		if err = p.conn.RPush(ctx, p.key, data).Err(); err != nil {
-			return fmt.Errorf("failed RPush message %v with key: %s: %w", messages[0], p.key, err)
-		}
-
-		return nil
-	default:
-		messagesData := make([]interface{}, len(messages))
-		for i, message := range messages {
-			data, err := json.Marshal(message)
-			if err != nil {
-				return fmt.Errorf("failed to marshal message %v with key: %s: %w", messages[i], p.key, err)
-			}
-			messagesData[i] = data
-		}
-
-		if err := p.conn.RPush(ctx, p.key, messagesData...).Err(); err != nil {
-			return fmt.Errorf("failed RPush messages with key: %s: %w", p.key, err)
-		}
-
-		return nil
+func (p *Producer[TMessage]) Produce(ctx context.Context, message TMessage) error {
+	if err := ctx.Err(); err != nil {
+		return err
 	}
+
+	data, err := json.Marshal(message)
+	if err != nil {
+		return fmt.Errorf("failed to marshal message for key:%s : %w", p.key, err)
+	}
+
+	if err = p.conn.RPush(ctx, p.key, data).Err(); err != nil {
+		return fmt.Errorf("redis failed RPUSH message for key:%s : %w", p.key, err)
+	}
+
+	return nil
 }

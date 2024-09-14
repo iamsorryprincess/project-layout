@@ -1,8 +1,8 @@
 lint:
-	golangci-lint run ./...
+	golangci-lint run ./... -c .golangci.yaml
 
 dev-infrastructure:
-	docker compose -f deploy/dev/infrastructure/docker-compose.yml -p project-layout-dev-infrastructure up -d
+	docker compose -f deploy/dev/infrastructure/docker-compose.yaml -p project-layout-dev-infrastructure up -d
 
 dev-build:
 	cd deploy/dev && docker compose -p project-layout-dev build

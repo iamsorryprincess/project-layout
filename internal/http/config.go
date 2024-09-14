@@ -1,15 +1,15 @@
 package http
 
-import "github.com/iamsorryprincess/project-layout/internal/configuration"
+import "time"
 
 type Config struct {
 	Address string
 
-	ReadTimeout       configuration.Duration
-	ReadHeaderTimeout configuration.Duration
-	WriteTimeout      configuration.Duration
-	IdleTimeout       configuration.Duration
-	ShutdownTimeout   configuration.Duration
+	ReadTimeout       time.Duration
+	ReadHeaderTimeout time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
+	ShutdownTimeout   time.Duration
 
 	MaxHeaderBytes int
 

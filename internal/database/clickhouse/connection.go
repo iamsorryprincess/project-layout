@@ -10,12 +10,11 @@ import (
 )
 
 type Connection struct {
-	driver.Conn
-
 	logger log.Logger
+	driver.Conn
 }
 
-func New(config Config, logger log.Logger) (*Connection, error) {
+func New(logger log.Logger, config Config) (*Connection, error) {
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: config.Hosts,
 		Auth: clickhouse.Auth{
@@ -33,29 +32,29 @@ func New(config Config, logger log.Logger) (*Connection, error) {
 		Compression: &clickhouse.Compression{
 			Method: clickhouse.CompressionLZ4,
 		},
-		DialTimeout:      config.DialTimeout.Duration,
+		DialTimeout:      config.DialTimeout,
 		MaxOpenConns:     config.MaxOpenConnections,
 		MaxIdleConns:     config.MaxIdleConnections,
-		ConnMaxLifetime:  config.ConnectionMaxLifetime.Duration,
+		ConnMaxLifetime:  config.ConnectionMaxLifetime,
 		ConnOpenStrategy: clickhouse.ConnOpenInOrder,
 		BlockBufferSize:  uint8(config.BlockBufferSize),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("clickhouse connection failed: %v", err)
+		return nil, fmt.Errorf("clickhouse connection failed: %w", err)
 	}
 
 	if err = conn.Ping(context.Background()); err != nil {
-		return nil, fmt.Errorf("clickhouse ping failed %v", err)
+		return nil, fmt.Errorf("clickhouse ping failed %w", err)
 	}
 
 	return &Connection{
-		Conn:   conn,
 		logger: logger,
+		Conn:   conn,
 	}, nil
 }
 
 func (c *Connection) Close() {
 	if err := c.Conn.Close(); err != nil {
-		c.logger.Error().Str("type", "clickhouse").Msg("clickhouse failed to close connection")
+		c.logger.Error().Err(err).Msg("clickhouse failed to close connection")
 	}
 }
