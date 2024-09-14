@@ -4,12 +4,14 @@ go 1.23.1
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.28.3
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/redis/go-redis/v9 v9.6.1
 	github.com/rs/zerolog v1.33.0
 	github.com/tarantool/go-tarantool/v2 v2.1.0
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/ClickHouse/ch-go v0.62.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

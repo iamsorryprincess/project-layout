@@ -36,17 +36,21 @@ func New() *App {
 
 func (a *App) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	defer a.close()
 	defer cancel()
 
 	a.ctx = ctx
 
-	var err error
-	if a.config, err = configuration.New[config.Config](); err != nil {
-		log.New("error", serviceName).Error().Err(err).Msg("failed to load configuration")
+	if err := a.initConfig(); err != nil {
 		return
 	}
 
 	a.logger = log.New(a.config.LogLevel, serviceName)
+
+	if err := a.initDatabases(); err != nil {
+		return
+	}
 
 	a.httpServer = http.NewServer(a.logger, a.config.HTTP, nil)
 	a.httpServer.Start()
@@ -55,7 +59,61 @@ func (a *App) Run() {
 
 	s := background.Wait()
 
-	a.httpServer.Stop()
-
 	a.logger.Info().Str("stop_signal", s.String()).Msg("service stopped")
+}
+
+func (a *App) initConfig() error {
+	var err error
+	if a.config, err = configuration.New[config.Config](); err != nil {
+		log.New("error", serviceName).Error().Err(err).Msg("failed to load configuration")
+		return err
+	}
+	return nil
+}
+
+func (a *App) initDatabases() error {
+	var err error
+	if a.mysqlConn, err = mysql.New(a.logger, a.config.MySQL); err != nil {
+		a.logger.Error().Err(err).Msg("failed connect to mysql")
+		return err
+	}
+	a.logger.Info().Msg("mysql successfully connected")
+
+	if a.redisConn, err = redis.New(a.logger, a.config.Redis); err != nil {
+		a.logger.Error().Err(err).Msg("failed connect to redis")
+		return err
+	}
+	a.logger.Info().Msg("redis successfully connected")
+
+	if a.clickhouseConn, err = clickhouse.New(a.logger, a.config.Clickhouse); err != nil {
+		a.logger.Error().Err(err).Msg("failed connect to clickhouse")
+		return err
+	}
+	a.logger.Info().Msg("clickhouse successfully connected")
+
+	if a.tarantoolConn, err = tarantool.New(a.logger, a.config.Tarantool); err != nil {
+		a.logger.Error().Err(err).Msg("failed connect to tarantool")
+		return err
+	}
+	a.logger.Info().Msg("tarantool successfully connected")
+
+	return nil
+}
+
+func (a *App) close() {
+	if a.httpServer != nil {
+		a.httpServer.Stop()
+	}
+
+	if a.mysqlConn != nil {
+		a.mysqlConn.Close()
+	}
+
+	if a.redisConn != nil {
+		a.redisConn.Close()
+	}
+
+	if a.tarantoolConn != nil {
+		a.tarantoolConn.Close()
+	}
 }
