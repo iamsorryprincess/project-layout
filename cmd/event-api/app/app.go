@@ -113,8 +113,9 @@ func (a *App) initDatabases() error {
 
 func (a *App) initQueue() {
 	a.clickProducer = redisqueue.NewProducer[domain.Click]("clicks", a.redisConn)
-	a.clickConsumer = queuetransport.NewClickConsumer()
+	a.clickConsumer = queuetransport.NewClickConsumer(a.logger, a.clickhouseConn)
 	a.clickConsumerWorker = redisqueue.NewConsumerWorker[domain.Click](a.logger, "clicks", a.config.ClicksConsumer, a.redisConn, a.clickConsumer)
+	a.clickConsumerWorker.Start(a.ctx)
 }
 
 func (a *App) initHTTP() {

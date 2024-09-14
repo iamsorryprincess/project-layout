@@ -1,5 +1,8 @@
 package domain
 
+import "time"
+
 type Click struct {
-	IP string
+	CreatedAt time.Time
+	IP        string
 }

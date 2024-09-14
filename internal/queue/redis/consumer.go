@@ -1,7 +1,9 @@
 package redis
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"sync"
 	"time"
@@ -82,8 +84,8 @@ func (c *ConsumerWorker[TMessage]) processMessages(ctx context.Context) error {
 			return err
 		}
 
-		var messages []TMessage
-		if err := c.conn.LPopCount(ctx, c.config.Key, c.config.Count).ScanSlice(&messages); err != nil {
+		data, err := c.conn.LPopCount(ctx, c.config.Key, c.config.Count).Result()
+		if err != nil {
 			if errors.Is(err, redis.Nil) {
 				return nil
 			}
@@ -91,7 +93,30 @@ func (c *ConsumerWorker[TMessage]) processMessages(ctx context.Context) error {
 			return err
 		}
 
-		if err := c.consumer.Consume(ctx, messages); err != nil {
+		if len(data) == 0 {
+			return nil
+		}
+
+		var buf bytes.Buffer
+		buf.WriteString("[")
+
+		n := len(data)
+		for i, value := range data {
+			buf.WriteString(value)
+
+			if i != n-1 {
+				buf.WriteString(",")
+			}
+		}
+
+		buf.WriteString("]")
+
+		var messages []TMessage
+		if err = json.Unmarshal(buf.Bytes(), &messages); err != nil {
+			return err
+		}
+
+		if err = c.consumer.Consume(ctx, messages); err != nil {
 			return err
 		}
 	}

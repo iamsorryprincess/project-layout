@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/iamsorryprincess/project-layout/internal/domain"
 	"github.com/iamsorryprincess/project-layout/internal/log"
@@ -23,7 +24,8 @@ func NewHandler(logger log.Logger, clickProducer queue.Producer[domain.Click]) *
 
 func (h *Handler) HandleClick(writer http.ResponseWriter, request *http.Request) {
 	click := domain.Click{
-		IP: request.Header.Get("X-Real-IP"),
+		CreatedAt: time.Now(),
+		IP:        request.Header.Get("X-Real-IP"),
 	}
 
 	if err := h.clickProducer.Produce(request.Context(), click); err != nil {
