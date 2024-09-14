@@ -5,6 +5,7 @@ import (
 
 	"github.com/iamsorryprincess/project-layout/cmd/event-api/config"
 	httptransport "github.com/iamsorryprincess/project-layout/cmd/event-api/http"
+	queuetransport "github.com/iamsorryprincess/project-layout/cmd/event-api/queue"
 	"github.com/iamsorryprincess/project-layout/internal/background"
 	"github.com/iamsorryprincess/project-layout/internal/configuration"
 	"github.com/iamsorryprincess/project-layout/internal/database/clickhouse"
@@ -32,6 +33,9 @@ type App struct {
 	tarantoolConn  *tarantool.Connection
 
 	clickProducer queue.Producer[domain.Click]
+	clickConsumer queue.Consumer[domain.Click]
+
+	clickConsumerWorker *redisqueue.ConsumerWorker[domain.Click]
 
 	httpServer *http.Server
 }
@@ -109,6 +113,8 @@ func (a *App) initDatabases() error {
 
 func (a *App) initQueue() {
 	a.clickProducer = redisqueue.NewProducer[domain.Click]("clicks", a.redisConn)
+	a.clickConsumer = queuetransport.NewClickConsumer()
+	a.clickConsumerWorker = redisqueue.NewConsumerWorker[domain.Click](a.logger, "clicks", a.config.ClicksConsumer, a.redisConn, a.clickConsumer)
 }
 
 func (a *App) initHTTP() {
@@ -119,6 +125,10 @@ func (a *App) initHTTP() {
 }
 
 func (a *App) close() {
+	if a.clickConsumerWorker != nil {
+		a.clickConsumerWorker.Shutdown()
+	}
+
 	if a.httpServer != nil {
 		a.httpServer.Stop()
 	}

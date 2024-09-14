@@ -6,6 +6,7 @@ import (
 	"github.com/iamsorryprincess/project-layout/internal/database/redis"
 	"github.com/iamsorryprincess/project-layout/internal/database/tarantool"
 	"github.com/iamsorryprincess/project-layout/internal/http"
+	redisqueue "github.com/iamsorryprincess/project-layout/internal/queue/redis"
 )
 
 type Config struct {
@@ -20,4 +21,6 @@ type Config struct {
 	Tarantool tarantool.Config
 
 	HTTP http.Config
+
+	ClicksConsumer redisqueue.ConsumerConfig
 }

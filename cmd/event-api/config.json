@@ -46,5 +46,12 @@
     "ConnectionString": "nats://project-layout-dev-nats:4222",
     "MaxReconnectCount": 3,
     "Timeout": 1000000000
+  },
+
+  "ClicksConsumer": {
+    "Key": "clicks",
+    "Count": 2,
+    "WorkersCount": 1,
+    "ConsumeInterval": 1000000000
   }
 }
